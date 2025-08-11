@@ -820,7 +820,7 @@ def get_specifications(unit):
             add(unit.T, 'Temperature')
         elif unit.Q is not None:
             add(unit.Q, 'Heat')
-        add(unit.reaction.X, 'Conversion', split_camel(unit.reaction.reactant), n=n)
+        add(unit.reaction.X, 'Conversion', split_camel(unit.reaction.reactant))
     elif isinstance(unit, bst.Mixer):
         add(0, 'Heat')
     elif isinstance(unit, bst.Splitter):

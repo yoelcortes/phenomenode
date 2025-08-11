@@ -47,7 +47,7 @@ Generate convergence profiles. The plot images will be saved in benchmark/images
 ```python
 >>> import benchmark
 >>> benchmark.plot_profile(
-...     'acetic_acid_simple_ideal'
+...     'acetic_acid_simple_ideal',
 ...     load=True, 
 ... )
 ```
