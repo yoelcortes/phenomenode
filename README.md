@@ -33,7 +33,27 @@ View a list of registered systems for benchmarking as follows:
  'haber_bosch_process')
 ```
 
-Generate convergence profiles. The plot images will be saved in benchmark/images: 
+Create graphs.
+
+```python
+>>> import benchmark
+>>> benchmark.create_graphs('acetic_acid_simple')
+```
+The following graphs will be created and saved in benchmark/graphs.
+
+- Full phenomena-based graph representation:
+  ![AcOH_profile](./benchmark/images/acetic_acid_simple_graph.png)
+
+- Material balance graph representation:
+  ![AcOH_profile](./benchmark/images/acetic_acid_simple_subgraph_material_balance.png)
+
+- Energy balance graph representation:
+  ![AcOH_profile](./benchmark/images/acetic_acid_simple_subgraph_energy_balance.png)
+
+- All other phenomena graph representation:
+  ![AcOH_profile](./benchmark/images/acetic_acid_simple_subgraph_phenomena.png)
+
+Generate convergence profiles. The plots will be saved in benchmark/images: 
 
 ```python
 >>> import benchmark
