@@ -51,7 +51,7 @@ Generate convergence profiles. The plot images will be saved in benchmark/images
 ...     load=True, 
 ... )
 ```
-![other_systems_profile](./benchmark/images/acetic_acid_simple_profile_ideal.png)
+![other_systems_profile](./benchmark/images/acetic_acid_simple_ideal_profile.png)
 
 Generate excel spreadsheets of simulation data for all benchmark systems. 
 The excel files will be stored in benchmark/simulations:
