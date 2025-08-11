@@ -42,16 +42,16 @@ Create graphs.
 The following graphs will be created and saved in benchmark/graphs.
 
 - Full phenomena-based graph representation:
-  ![AcOH_profile](./benchmark/images/acetic_acid_simple_graph.png)
+  ![full_graph](./benchmark/images/acetic_acid_simple_graph.png)
 
 - Material balance graph representation:
-  ![AcOH_profile](./benchmark/images/acetic_acid_simple_subgraph_material_balance.png)
+  ![material_subgraph](./benchmark/images/acetic_acid_simple_subgraph_material_balance.png)
 
 - Energy balance graph representation:
-  ![AcOH_profile](./benchmark/images/acetic_acid_simple_subgraph_energy_balance.png)
+  ![energy_subgraph](./benchmark/images/acetic_acid_simple_subgraph_energy_balance.png)
 
 - All other phenomena graph representation:
-  ![AcOH_profile](./benchmark/images/acetic_acid_simple_subgraph_phenomena.png)
+  ![phenomena_subgraph](./benchmark/images/acetic_acid_simple_subgraph_phenomena.png)
 
 Generate convergence profiles. The plots will be saved in benchmark/images: 
 
