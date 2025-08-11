@@ -25,10 +25,10 @@ View a list of registered systems for benchmarking as follows:
 ```python
 >>> import benchmark
 >>> benchmark.benchmark_systems_2025
-('acetic_acid_simple', 
+('acetic_acid_simple',
  'acetic_acid_simple_ideal',
- 'acetic_acid_simple_complex',
- 'acetic_acid_simple_complex_ideal',
+ 'acetic_acid_complex',
+ 'acetic_acid_complex_ideal',
  'butanol_purification',
  'haber_bosch_process')
 ```

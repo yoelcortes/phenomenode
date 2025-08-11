@@ -1,6 +1,7 @@
 # Simulations
 benchmark/simulations/*
 benchmark/graphs/*
+*flowsheet.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -119,8 +119,8 @@ stages_file = os.path.join(simulations_folder, 'system_stages.json')
 benchmark_systems_2025 = (
     'acetic_acid_simple',
     'acetic_acid_simple_ideal',
-    'acetic_acid_simple_complex',
-    'acetic_acid_simple_complex_ideal',
+    'acetic_acid_complex',
+    'acetic_acid_complex_ideal',
     'butanol_purification',
     'haber_bosch_process',
 )
@@ -727,7 +727,10 @@ def variable_convergence_table(name, alg='sequential modular'):
     profiles = profiles.sort_index(axis=1)
     profiles.index = time
     profiles.index.name = 'Time [s]'
-    return profiles
+    ub = system_tickmarks[False, name][-1]
+    for n, t in enumerate(time):
+        if t > ub: break
+    return profiles.iloc[:n]
 
 def get_specifications(unit):
     specifications = []
