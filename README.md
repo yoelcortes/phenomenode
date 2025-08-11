@@ -42,7 +42,7 @@ Generate convergence profiles. The plot images will be saved in benchmark/images
 ...     load=True, # Use False to rerun simulations
 ... )
 ```
-![AcOH_profile](./images/acetic_acid_simple_profile.png)
+![AcOH_profile](./benchmark/images/acetic_acid_simple_profile.png)
 
 ```python
 >>> import benchmark
@@ -51,7 +51,7 @@ Generate convergence profiles. The plot images will be saved in benchmark/images
 ...     load=True, 
 ... )
 ```
-![other_systems_profile](./images/acetic_acid_simple_profile_ideal.png)
+![other_systems_profile](./benchmark/images/acetic_acid_simple_profile_ideal.png)
 
 Generate excel spreadsheets of simulation data for all benchmark systems. 
 The excel files will be stored in benchmark/simulations:
