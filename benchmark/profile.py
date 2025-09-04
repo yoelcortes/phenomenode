@@ -60,13 +60,15 @@ bst.System.strict_convergence = False
 bst.System.default_maxiter = 200
 bst.System.default_molar_tolerance = 1e-6
 bst.System.default_relative_molar_tolerance = 1e-6
+bst.MultiStageEquilibrium.default_optimize_result = False
 bst.MultiStageEquilibrium.default_maxiter = 20
 bst.MultiStageEquilibrium.max_attempts = 0 # 0 for tracking
-bst.MultiStageEquilibrium.default_S_tolerance = 1e-9
-bst.MultiStageEquilibrium.default_relative_S_tolerance = 1e-12
+bst.MultiStageEquilibrium.default_molar_tolerance = 1e-9
+bst.MultiStageEquilibrium.default_relative_molar_tolerance = 1e-12
 bst.MultiStageMixerSettlers.default_maxiter = 30 # 50
 bst.MultiStageMixerSettlers.max_attempts = 0
 bst.PhasePartition.B_relaxation_factor = 0.5
+bst.MultiStageEquilibrium.default_methods = {'phenomena': 'fixed-point'}
 # bst.MultiStageEquilibrium.default_fallback = ('sequential', None)
 # bst.MultiStageMixerSettlers.default_fallback = None
 tmo.BubblePoint.maxiter = 100 # -> 50 [-]
@@ -629,6 +631,12 @@ def parse_index(index, dct):
     elif variable == 'S':
         variable = 'Separation factor'
         units = '-'
+    elif variable == 'R':
+        variable = 'Reaction rate'
+        units = 'kmol/hr'
+    elif variable == 'Q':
+        variable = 'Heat'
+        units = 'kJ/hr'
     else:
         raise RuntimeError(f'unknown variable {variable!r}')
     if '.outs[' in index or '.ins[' in index:
@@ -832,7 +840,10 @@ def get_specifications(unit):
     return specifications
 
 def specifications_table(name):
-    sys = create_tracked_system(name, 'sequential modular') 
+    sys = create_tracked_system(name, 'sequential modular')
+    for i in sys.path:
+        i._setup()
+        i.run() # Necessary to update pressures
     specifications = sum([get_specifications(i) for i in sys.units], [])
     index, values = zip(*specifications)
     return pd.DataFrame(
@@ -845,7 +856,7 @@ def save_all_system_reports():
     for i in benchmark_systems_2025: system_report(i)
 
 def system_report(name):
-    file = os.path.join(simulations_folder, f'{name}_specifications_and_steady_state.xlsx')
+    file = os.path.join(simulations_folder, f'{name}_profiles.xlsx')
     writer = pd.ExcelWriter(file)
     sys = create_tracked_system(name, 'sequential modular') 
     for i in sys.streams: i.mol[:] = 1 # Work around so streams do not appear empty.

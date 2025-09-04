@@ -426,6 +426,7 @@ def test_simple_acetic_acid_purification_system():
     sm.simulate()
 
 def test_complex_acetic_acid_purification_system():
+    bst.PhasePartition.B_relaxation_factor = 0.5
     # po = create_acetic_acid_complex_system('phenomena-based')
     # po.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=20)
     sm = create_acetic_acid_complex_system('sequential modular')
