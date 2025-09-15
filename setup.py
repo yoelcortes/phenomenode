@@ -14,7 +14,7 @@ setup(
     description="Benchmark simulations and graph representations for phenomena-based decomposition approaches. ",
     long_description=open('README.md', encoding='utf-8').read(),
     author='Yoel Cortes-Pena',
-    install_requires=['biosteam'],
+    install_requires=['biosteam==2.52.5', 'thermosteam==0.52.1'],
     extras_require={
         'dev': [
         ]
