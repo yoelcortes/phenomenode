@@ -13,6 +13,8 @@ __all__ = (
     'create_acetic_acid_complex_decoupled_system',
 )
 
+bst.MultiStageEquilibrium.default_optimize_result = False
+
 def create_acetic_acid_simple_system(alg, ideal=False):
     solvent_feed_ratio = 1
     IDs = ['Water', 'AceticAcid', 'EthylAcetate']
@@ -36,7 +38,6 @@ def create_acetic_acid_simple_system(alg, ideal=False):
             phases=('L', 'l'),
             maxiter=200,
             use_cache=True,
-            method='fixed-point',
             partition_data={
                 'IDs': IDs,
                 'K': Ks,
@@ -59,7 +60,6 @@ def create_acetic_acid_simple_system(alg, ideal=False):
             boilup=2.57,
             full_condenser=True,
             maxiter=200,
-            method='fixed-point',
             use_cache=True,
             LHK=('EthylAcetate', 'AceticAcid'),
         )
@@ -194,12 +194,9 @@ def create_acetic_acid_complex_system(
             EtAc_recycle = solvent_recycle.imass['EthylAcetate']
             EtAc_required = broth * solvent_feed_ratio
             if EtAc_required < EtAc_recycle:
-                solvent_recycle.F_mass *= EtAc_required / EtAc_recycle
-                EtAc_recycle = solvent_recycle.imass['EthylAcetate']
-            EtAc_fresh = EtAc_required - EtAc_recycle
-            ethyl_acetate.imass['EthylAcetate'] = max(
-                0, EtAc_fresh
-            )
+                ethyl_acetate.imass['EthylAcetate'] = 0
+            else:
+                ethyl_acetate.imass['EthylAcetate'] = EtAc_required - EtAc_recycle
         extract_feed_stage = int(extract_distillation_stages / 2)
         ED = bst.MESHDistillation(
             'extract_distillation',
@@ -426,16 +423,15 @@ def test_simple_acetic_acid_purification_system():
     sm.simulate()
 
 def test_complex_acetic_acid_purification_system():
-    bst.PhasePartition.B_relaxation_factor = 0.5
-    # po = create_acetic_acid_complex_system('phenomena-based')
-    # po.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=20)
+    po = create_acetic_acid_complex_system('phenomena-based')
+    po.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=20, method='fixed-point')
     sm = create_acetic_acid_complex_system('sequential modular')
-    sm.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=20)
-    # po.simulate()
+    sm.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=20, method='fixed-point')
+    po.simulate()
     sm.simulate()
     
 def test_complex_decoupled_acetic_acid_purification_system():
-    po = create_acetic_acid_complex_decoupled_system('phenomena-oriented')
+    po = create_acetic_acid_complex_decoupled_system('phenomena based')
     po.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=20)
     sm = create_acetic_acid_complex_decoupled_system('sequential modular')
     sm.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=20)
