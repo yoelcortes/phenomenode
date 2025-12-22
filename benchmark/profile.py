@@ -58,20 +58,22 @@ __all__ = (
 
 bst.System.strict_convergence = False
 bst.System.default_maxiter = 200
+bst.System.default_methods = {
+    'Sequential modular': 'fixed-point',
+    'Phenomena based': 'fixed-point',
+    'Phenomena modular': 'fixed-point',
+}
 bst.System.default_molar_tolerance = 1e-6
 bst.System.default_relative_molar_tolerance = 1e-6
 bst.MultiStageEquilibrium.default_optimize_result = False
-bst.MultiStageEquilibrium.default_maxiter = 100
-bst.MultiStageEquilibrium.max_attempts = 0 # 0 for tracking
-bst.MultiStageEquilibrium.default_molar_tolerance = 1e-12
-bst.MultiStageEquilibrium.default_relative_molar_tolerance = 1e-16
+bst.MultiStageEquilibrium.default_maxiter = 50
+bst.MultiStageEquilibrium.default_max_attempts = 1 # 1 for tracking
+bst.MultiStageEquilibrium.default_tolerance = 1e-9
+bst.MultiStageEquilibrium.default_relative_tolerance = 1e-9
 bst.MultiStageMixerSettlers.default_maxiter = 30 # 50
-bst.MultiStageMixerSettlers.max_attempts = 0
-bst.PhasePartition.B_relaxation_factor = 0.5
-bst.MultiStageEquilibrium.default_algorithms = ('phenomena', 'sequential modular')
-bst.MultiStageEquilibrium.default_methods = {'phenomena': 'fixed-point'}
-# bst.MultiStageEquilibrium.default_fallback = ('sequential', None)
-# bst.MultiStageMixerSettlers.default_fallback = None
+bst.MultiStageMixerSettlers.default_max_attempts = 1
+bst.MultiStageEquilibrium.default_algorithms = ('phenomena',)
+bst.MultiStageEquilibrium.default_methods = {'phenomena': 'fixed-point', 'sequential modular': 'fixed-point'}
 tmo.BubblePoint.maxiter = 100 # -> 50 [-]
 tmo.DewPoint.maxiter = 100 # -> 50 [-]
 tmo.BubblePoint.T_tol = 1e-16 # -> 1e-9 [K]
@@ -123,6 +125,7 @@ benchmark_systems_2025 = (
     'acetic_acid_simple',
     'acetic_acid_simple_ideal',
     'acetic_acid_complex',
+    'acetic_acid_complex_relaxed',
     'acetic_acid_complex_ideal',
     'butanol_purification',
     'haber_bosch_process',
@@ -133,6 +136,7 @@ system_convergence_times = {}
 system_tickmarks = {} # Key: closeup-bool, name-str
 system_labels = {}
 system_yticks = {}
+relaxation_factors = {}
 units = set()
 try:
     with open(stages_file) as f: system_stages = json.load(f)
@@ -145,7 +149,8 @@ def register(name, title, time, tickmarks, label,
              closeup_ideal_tickmarks=None,
              closeup_nonideal_tickmarks=None,
              f=None,
-             unit=False):
+             unit=False,
+             relaxation_factor=None):
     if f is None: f = getattr(systems, 'create_system_' + name, None) or getattr(systems, 'create_' + name + '_system')
     if yticks is None: yticks = [(-10, -5, 0, 5), (-10, -5, 0, 5)]
     if name not in system_stages: 
@@ -156,6 +161,18 @@ def register(name, title, time, tickmarks, label,
         (name, f),
         (name + '_ideal', lambda *args, **kwargs: create_system(*args, ideal=True, **kwargs)),
     ]
+    if relaxation_factor is not None:
+        name_relaxed = name + '_relaxed'
+        relaxation_factors[name_relaxed] = True
+        def create_relaxed_system(*args, **kwargs):
+            sys = create_system(*args, **kwargs)
+            sys.material_relaxation_factor = relaxation_factor
+            return sys
+        
+        name_fs.append(
+            (name_relaxed, create_relaxed_system)
+        )
+        
     for i, f in name_fs:
         all_systems[i] = f
         system_titles[i] = title
@@ -166,9 +183,10 @@ def register(name, title, time, tickmarks, label,
     if ideal_tickmarks is None: ideal_tickmarks = tickmarks
     if closeup_ideal_tickmarks is None: closeup_ideal_tickmarks = ideal_tickmarks
     if closeup_nonideal_tickmarks is None: closeup_nonideal_tickmarks = tickmarks
-    system_tickmarks[False, name] = tickmarks
+    for i in ('', '_relaxed'):
+        system_tickmarks[False, name + i] = tickmarks
+        system_tickmarks[True, name + i] = closeup_nonideal_tickmarks
     system_tickmarks[False, name + '_ideal'] = ideal_tickmarks
-    system_tickmarks[True, name] = closeup_nonideal_tickmarks
     system_tickmarks[True, name + '_ideal'] = closeup_ideal_tickmarks
 
 def get_LLE_partition_coefficients(sys):
@@ -191,22 +209,24 @@ def get_LLE_partition_coefficients(sys):
 
 register(
     'acetic_acid_complex', 'Rigorous system',
-    90, [0, 17, 34, 51, 68], 'AcOH\nindustrial\ndewatering', 
+    90, [0, 8, 16, 24, 32], 'AcOH\nindustrial\ndewatering', 
     [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
     ideal_tickmarks=[0, 6, 12, 18, 24],
     closeup_ideal_tickmarks=[0, 0.5, 1, 1.5, 2, 2.5],
     closeup_nonideal_tickmarks=[0, 5, 10, 15, 20],
+    relaxation_factor=0.5,
     # [(-5, -2.5, 0, 2.5, 5), (-8, -5, -2, 1, 4)],
 )
 register(
     'acetic_acid_simple', 'Subsystem',
-    10, 
-    [0, 1.5, 3, 4.5, 6], 
+    12, 
+    [0, 1.5, 3, 4.5, 6],  
     'AcOH\npartial\ndewatering',
     [(-15, -10, -5, 0, 5, 10), (-15, -10, -5, 0, 5, 10)],
     ideal_tickmarks=[0, 0.4, 0.8, 1.2, 1.6],
     closeup_ideal_tickmarks=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
     closeup_nonideal_tickmarks=[0, 0.3, 0.6, 0.9, 1.2, 1.5],
+    relaxation_factor=0.5,
     # [(-15, -10, -5, 0, 5, 10), (-15, -10, -5, 0, 5, 10)],
 )
 register(
@@ -476,9 +496,9 @@ def create_convergence_gif(
     ):
     plt.style.use('dark_background')
     plt.rcParams.update({
-        "figure.facecolor":  (0.0, 0.0, 0.0, 0),  # red   with alpha = 30%
-        "axes.facecolor":    (0.0, 0.0, 0.0, 1),  # green with alpha = 50%
-        "savefig.facecolor": (0.0, 0.0, 0.0, 0),  # blue  with alpha = 20%
+        "figure.facecolor":  (0.0, 0.0, 0.0, 0), 
+        "axes.facecolor":    (0.0, 0.0, 0.0, 1), 
+        "savefig.facecolor": (0.0, 0.0, 0.0, 0), 
     })
     fs = 9
     bst.set_font(fs)
@@ -599,7 +619,7 @@ def get_steady_state(name, load=True):
         except: 
             return get_steady_state(name, False)
     else:
-        sys = create_tracked_system(name, 'sequential modular') 
+        sys = create_tracked_system(name, 'sequential modular', system_convergence_times[name] * 1.5) 
         sys.simulate(design_and_cost=False)
         sys.assert_tracking_ok()
         sys.flowsheet.clear()
@@ -966,6 +986,8 @@ def get_variable_profiles(
         number=0, load=True, mock=False, convergence_rate=None,
         grouped_error=True, error=True,
     ): 
+    if '_relaxed' in name and name not in relaxation_factors:
+        name = name.rstrip('_relaxed')
     file_name = f"{name}_{algorithm}_{number}"
     file = os.path.join(simulations_folder, file_name)
     bst.F.clear()
@@ -1002,8 +1024,12 @@ def get_variable_profiles(
         steady_state.values[steady_state > 1e6] = 1e6
         variable_profiles.values[variable_profiles < 1e-6] = 0
         variable_profiles.values[variable_profiles > 1e6] = 1e6
-        errors = (variable_profiles - steady_state)
-        # breakpoint()
+        steady_state = steady_state.reindex(variable_profiles.columns)
+        errors = pd.DataFrame(
+            variable_profiles.values - steady_state.values, 
+            columns=variable_profiles.columns, 
+            index=variable_profiles.index
+        )
         # ms = [i for i in errors if 'U1' in i[0] and 'Phi' in i[0]]
         # print(errors[ms].sum())
     if not error:
@@ -1057,6 +1083,7 @@ def dct_mean_std(dcts: list[dict], keys: list[str]):
 def plot_profile(
         systems=None, algorithms=None, N=1, load=True, save=True, dark=False,
         closeup=False, fs=None, width=None, aspect_ratio=None, label=True,
+        load_steady_state=True,
     ):
     if dark: 
         plt.style.use('dark_background')
@@ -1080,6 +1107,7 @@ def plot_profile(
     for m, sys in enumerate(systems):
         time = system_convergence_times[sys]
         axes = all_axes[:, m]
+        if not load_steady_state: get_steady_state(sys, False)
         profiles = {
             alg: [get_variable_profiles(sys, alg, i, load=load) for i in range(N)]
             for alg in algorithms

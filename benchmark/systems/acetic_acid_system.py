@@ -54,7 +54,7 @@ def create_acetic_acid_simple_system(alg, ideal=False):
         DEA = bst.MESHDistillation(
             'distillation',
             N_stages=6, ins=[LE-1], feed_stages=[3],
-            outs=['', 'bottoms', recycle],
+            outs=[recycle, 'bottoms'],
             # stage_specifications={0: ('Reflux', 0.673), -1: ('Boilup', 2.57)},
             reflux=0.673,
             boilup=2.57,
@@ -62,6 +62,7 @@ def create_acetic_acid_simple_system(alg, ideal=False):
             maxiter=200,
             use_cache=True,
             LHK=('EthylAcetate', 'AceticAcid'),
+            vlle=False,
         )
         # HX = bst.SinglePhaseStage(ins=DEA-0, outs=recycle, T=320, phase='l')
         chemicals = bst.settings.chemicals
@@ -201,16 +202,17 @@ def create_acetic_acid_complex_system(
         ED = bst.MESHDistillation(
             'extract_distillation',
             ins=[extractor.extract, reflux],
-            outs=['', '', ''],
+            outs=['', ''],
             LHK=('EthylAcetate', 'AceticAcid'),
             N_stages=extract_distillation_stages,
             feed_stages=(extract_feed_stage, 1),
             full_condenser=True,
             boilup=3,
             use_cache=True,
+            vlle=False,
         )
         # ED.fallback = ('sequential modular', 'fixed-point', 5)
-        mixer = bst.Mixer('mixer', ins=[ED-2, distillate, distillate_2])
+        mixer = bst.Mixer('mixer', ins=[ED-0, distillate, distillate_2])
         settler = bst.StageEquilibrium(
             'settler',
             ins=(mixer-0), 
@@ -252,13 +254,14 @@ def create_acetic_acid_complex_system(
             'raffinate_distillation',
             LHK=('EthylAcetate', 'Water'),
             ins=[HX-1],
-            outs=['', wastewater, distillate],
+            outs=[distillate, wastewater],
             full_condenser=True,
             N_stages=raffinate_distillation_stages,
             feed_stages=(2,),
             reflux=1,
             boilup=2,
             use_cache=True,
+            vlle=False,
         )
         # RD.fallback = ('sequential modular', 'fixed-point', 5)
         # RD = bst.ShortcutColumn(
@@ -271,6 +274,9 @@ def create_acetic_acid_complex_system(
         #     Lr=0.999,
         #     Hr=0.95,
         # )
+    F = bst.F
+    sys._path = (F.extractor, F.heat_exchanger, F.raffinate_distillation, F.extract_distillation, F.acetic_acid_distillation, F.mixer, F.settler)
+    sys.recycle = F.mixer.outs[0]
     return sys
 
 def create_acetic_acid_complex_decoupled_system(
