@@ -9,6 +9,8 @@ import biosteam as bst
 __all__ = (
     'create_stripper_system', 
     'create_flash_system',
+    'create_shortcut_column_system',
+    'create_heat_exchanger_system',
 )
 
 def create_stripper_system(alg):
@@ -33,3 +35,29 @@ def create_flash_system(alg):
             phases=('g', 'l')
         )
     return system
+
+def create_shortcut_column_system(alg):
+    bst.settings.set_thermo(['Butane', 'Hexane'], cache=True)
+    feed = bst.Stream('feed', Butane=75, Hexane=50, T=320)
+    column = bst.ShortcutColumn('D1',
+        ins=[feed], 
+        outs=['vapor', 'liquid'],
+        LHK=('Butane', 'Hexane'),
+        y_top=0.99, x_bot=0.01, k=2,
+        is_divided=True,
+    )
+    return bst.System.from_units(units=[column], algorithm=alg)
+
+def create_heat_exchanger_system(alg):
+    bst.settings.set_thermo(['Butane', 'Hexane', 'Water'], cache=True)
+    feed = bst.Stream('feed', Butane=75, Hexane=50, T=330)
+    utility = bst.Stream('feed', Water=75, T=310)
+    HX = bst.StageEquilibrium(
+        'heat_exchanger',
+        ins=[feed, utility], 
+        phases=('g', 'l'),
+        B=0,
+    )
+    return bst.System.from_units(units=[HX], algorithm=alg)
+
+

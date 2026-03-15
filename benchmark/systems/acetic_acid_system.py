@@ -4,12 +4,14 @@ Created on Sat Mar 16 13:38:11 2024
 
 @author: cortespea
 """
+import benchmark
 import biosteam as bst
 import numpy as np
 
 __all__ = (
     'create_acetic_acid_simple_system',
     'create_acetic_acid_complex_system',
+    'create_acetic_acid_complex_mock_system',
     'create_acetic_acid_complex_decoupled_system',
 )
 
@@ -95,11 +97,11 @@ def create_acetic_acid_simple_system(alg, ideal=False):
             )
     return sys
 
-def create_acetic_acid_complex_system(
+def create_acetic_acid_complex_mock_system(
         alg, 
-        extractor_stages=15, 
-        raffinate_distillation_stages=10,
-        extract_distillation_stages=15,
+        extractor_stages=6, 
+        raffinate_distillation_stages=6,
+        extract_distillation_stages=6,
         ideal=False
     ):
     IDs = ['Water', 'AceticAcid', 'EthylAcetate']
@@ -163,7 +165,6 @@ def create_acetic_acid_complex_system(
             top_chemical='EthylAcetate',
             feed_stages=(0, -1, -1),
             N_stages=extractor_stages,
-            collapsed_init=False,
             use_cache=True,
             partition_data={
                 'IDs': IDs,
@@ -211,11 +212,9 @@ def create_acetic_acid_complex_system(
             use_cache=True,
             vlle=False,
         )
-        # ED.fallback = ('sequential modular', 'fixed-point', 5)
-        mixer = bst.Mixer('mixer', ins=[ED-0, distillate, distillate_2])
         settler = bst.StageEquilibrium(
             'settler',
-            ins=(mixer-0), 
+            ins=(ED-0, distillate, distillate_2), 
             outs=(solvent_recycle, water_rich, reflux),
             phases=('L', 'l'),
             top_chemical='EthylAcetate',
@@ -225,14 +224,6 @@ def create_acetic_acid_complex_system(
                 'K': np.array([ 0.248,  2.301, 45.828]),
             } if ideal else None,
         )
-        # @settler.add_specification(run=True)
-        # def adjust_fresh_solvent_flow_rate():
-        #     broth = acetic_acid_broth.F_mass
-        #     EtAc_recycle = sum([i.imass['EthylAcetate'] for i in (ED-0, distillate, distillate_2)])
-        #     ethyl_acetate.imass['EthylAcetate'] = max(
-        #         0, broth * solvent_feed_ratio - EtAc_recycle
-        #     )
-        # settler.coupled_KL = True
         AD = bst.ShortcutColumn(
             'acetic_acid_distillation',
             LHK=('EthylAcetate', 'AceticAcid'),
@@ -263,17 +254,150 @@ def create_acetic_acid_complex_system(
             use_cache=True,
             vlle=False,
         )
-        # RD.fallback = ('sequential modular', 'fixed-point', 5)
-        # RD = bst.ShortcutColumn(
-        #     'raffinate_distillation',
-        #     LHK=('EthylAcetate', 'Water'),
-        #     ins=HX-1,
-        #     outs=[distillate, wastewater],
-        #     partial_condenser=False,
-        #     k=1.4,
-        #     Lr=0.999,
-        #     Hr=0.95,
-        # )
+    return sys
+
+def create_acetic_acid_complex_system(
+        alg, 
+        extractor_stages=15, 
+        raffinate_distillation_stages=10,
+        extract_distillation_stages=15,
+        ideal=False
+    ):
+    IDs = ['Water', 'AceticAcid', 'EthylAcetate']
+    bst.settings.set_thermo(IDs, cache=True, ideal=ideal)
+    solvent_feed_ratio = 1
+    chemicals = bst.settings.chemicals
+    acetic_acid_broth = bst.Stream(
+        ID='acetic_acid_broth', AceticAcid=6660, Water=43600, units='kg/hr',
+        # T=310,
+    )
+    ethyl_acetate = bst.Stream(
+        ID='fresh_solvent', EthylAcetate=15000, units='kg/hr', 
+        # T=310,
+    )
+    glacial_acetic_acid = bst.Stream(
+        'glacial_acetic_acid', 
+    )
+    wastewater = bst.Stream(
+        'wastewater',
+    )
+    solvent_recycle = bst.Stream(
+        'solvent_rich', 
+    )
+    reflux = bst.Stream('reflux')
+    water_rich = bst.Stream('water_rich')
+    distillate = bst.Stream('distillate')
+    distillate_2 = bst.Stream('distillate_2')
+    with bst.System('acetic_acid_complex', algorithm=alg) as sys:
+        @ethyl_acetate.material_balance
+        def fresh_solvent_flow_rate():
+            f = np.ones(chemicals.size)
+            r = np.zeros(chemicals.size)
+            v = r.copy()
+            index = chemicals.index('EthylAcetate')
+            r[index] = 1
+            v[index] = solvent_feed_ratio * acetic_acid_broth.F_mass / chemicals.EthylAcetate.MW
+            return (
+                {ethyl_acetate: f,
+                  solvent_recycle: r},
+                  v
+            )
+        extractor = bst.MultiStageMixerSettlers(
+            'extractor', 
+            ins=(acetic_acid_broth, solvent_recycle, ethyl_acetate), 
+            outs=('extract', 'raffinate'),
+            top_chemical='EthylAcetate',
+            feed_stages=(0, -1, -1),
+            N_stages=extractor_stages,
+            use_cache=True,
+            partition_data={
+                'IDs': IDs,
+                'K': np.array([
+                    [ 0.198,  2.109, 31.506],
+                    [ 0.198,  2.109, 31.511],
+                    [ 0.198,  2.109, 31.52 ],
+                    [ 0.198,  2.109, 31.533],
+                    [ 0.198,  2.109, 31.555],
+                    [ 0.198,  2.11 , 31.592],
+                    [ 0.198,  2.111, 31.652],
+                    [ 0.198,  2.113, 31.753],
+                    [ 0.198,  2.115, 31.922],
+                    [ 0.199,  2.12 , 32.205],
+                    [ 0.199,  2.128, 32.683],
+                    [ 0.201,  2.141, 33.49 ],
+                    [ 0.204,  2.163, 34.845],
+                    [ 0.21 ,  2.198, 37.094],
+                    [ 0.222,  2.248, 40.681]
+                ]),
+            } if ideal else None,
+        )
+        @extractor.add_specification(run=True)
+        def adjust_fresh_solvent_flow_rate():
+            broth = acetic_acid_broth.F_mass
+            EtAc_recycle = solvent_recycle.imass['EthylAcetate']
+            EtAc_required = broth * solvent_feed_ratio
+            fresh_solvent = EtAc_required - EtAc_recycle
+            if fresh_solvent < 0:
+                ethyl_acetate.imass['EthylAcetate'] = 0
+                solvent_recycle.F_mass *= EtAc_required / solvent_recycle.imass['EthylAcetate'] 
+            else:
+                ethyl_acetate.imass['EthylAcetate'] = fresh_solvent
+        extract_feed_stage = int(extract_distillation_stages / 2)
+        ED = bst.MESHDistillation(
+            'extract_distillation',
+            ins=[extractor.extract, reflux],
+            outs=['', ''],
+            LHK=('EthylAcetate', 'AceticAcid'),
+            N_stages=extract_distillation_stages,
+            feed_stages=(extract_feed_stage, 1),
+            full_condenser=True,
+            boilup=3,
+            use_cache=True,
+            vlle=False,
+        )
+        mixer = bst.Mixer('mixer', ins=[ED-0, distillate, distillate_2])
+        settler = bst.StageEquilibrium(
+            'settler',
+            ins=(mixer-0), 
+            outs=(solvent_recycle, water_rich, reflux),
+            phases=('L', 'l'),
+            top_chemical='EthylAcetate',
+            top_split=0.7,
+            partition_data={
+                'IDs': IDs,
+                'K': np.array([ 0.248,  2.301, 45.828]),
+            } if ideal else None,
+        )
+        AD = bst.ShortcutColumn(
+            'acetic_acid_distillation',
+            LHK=('EthylAcetate', 'AceticAcid'),
+            ins=ED-1,
+            outs=[distillate_2, glacial_acetic_acid],
+            partial_condenser=False,
+            Lr=0.999,
+            Hr=0.999,
+            k=1.5,
+        )
+        HX = bst.StageEquilibrium(
+            'heat_exchanger',
+            ins=[water_rich, extractor.raffinate], 
+            phases=('g', 'l'),
+            B=0,
+        )
+        AD.check_LHK = False
+        RD = bst.MESHDistillation(
+            'raffinate_distillation',
+            LHK=('EthylAcetate', 'Water'),
+            ins=[HX-1],
+            outs=[distillate, wastewater],
+            full_condenser=True,
+            N_stages=raffinate_distillation_stages,
+            feed_stages=(2,),
+            reflux=1,
+            boilup=2,
+            use_cache=True,
+            vlle=False,
+        )
     F = bst.F
     sys._path = (F.extractor, F.heat_exchanger, F.raffinate_distillation, F.extract_distillation, F.acetic_acid_distillation, F.mixer, F.settler)
     sys.recycle = F.mixer.outs[0]
@@ -349,7 +473,6 @@ def create_acetic_acid_complex_decoupled_system(
             top_chemical='EthylAcetate',
             feed_stages=(0, -1, -1),
             N_stages=extractor_stages,
-            collapsed_init=False,
             use_cache=True,
             partition_data={
                 'IDs': IDs,
@@ -444,6 +567,17 @@ def test_complex_decoupled_acetic_acid_purification_system():
     po.simulate()
     sm.simulate()
     
-# if __name__ == "__main__":
-#     test_simple_acetic_acid_purification_system()
-#     test_complex_acetic_acid_purification_system()
+if __name__ == "__main__":
+    # po = create_acetic_acid_simple_system('phenomena-based')
+    # po.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=20)
+    # sm = create_acetic_acid_simple_system('sequential modular')
+    # sm.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=20)
+    # po.simulate()
+    # sm.simulate()
+    po = create_acetic_acid_complex_system('phenomena-based')
+    po.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=40, method='fixed-point')
+    po.material_relaxation_factor = 0
+    sm = create_acetic_acid_complex_system('sequential modular')
+    sm.set_tolerance(mol=1e-3, rmol=1e-3, maxiter=40, method='fixed-point')
+    po.simulate()
+    # sm.simulate()

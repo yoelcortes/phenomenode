@@ -37,8 +37,8 @@ __all__ = (
     'register',
     'all_systems',
     'test_convergence',
-    'get_steady_state',
-    'steady_state_variables_table',
+    # 'get_steady_state',
+    # 'steady_state_variables_table',
     'specifications_table',
     'system_report',
     'save_all_system_reports',
@@ -66,47 +66,48 @@ bst.System.default_methods = {
 bst.System.default_molar_tolerance = 1e-6
 bst.System.default_relative_molar_tolerance = 1e-6
 bst.MultiStageEquilibrium.default_optimize_result = False
-bst.MultiStageEquilibrium.default_maxiter = 50
+bst.MultiStageEquilibrium.default_maxiter = 20
 bst.MultiStageEquilibrium.default_max_attempts = 1 # 1 for tracking
-bst.MultiStageEquilibrium.default_tolerance = 1e-9
-bst.MultiStageEquilibrium.default_relative_tolerance = 1e-9
-bst.MultiStageMixerSettlers.default_maxiter = 30 # 50
+bst.MultiStageEquilibrium.default_tolerance = 1e-5
+bst.MultiStageEquilibrium.early_termination = False
+bst.MultiStageEquilibrium.default_relative_tolerance = 1e-5
+bst.MultiStageMixerSettlers.default_maxiter = 20 # 50
 bst.MultiStageMixerSettlers.default_max_attempts = 1
 bst.MultiStageEquilibrium.default_algorithms = ('phenomena',)
 bst.MultiStageEquilibrium.default_methods = {'phenomena': 'fixed-point', 'sequential modular': 'fixed-point'}
 tmo.BubblePoint.maxiter = 100 # -> 50 [-]
 tmo.DewPoint.maxiter = 100 # -> 50 [-]
-tmo.BubblePoint.T_tol = 1e-16 # -> 1e-9 [K]
-tmo.DewPoint.T_tol = 1e-16 # -> 1e-9 [K]
-tmo.BubblePoint.P_tol = 1e-9 # -> 1e-3 [Pa]
-tmo.DewPoint.P_tol = 1e-9 # -> 1e-3 [Pa]
-tmo.VLE.T_tol = 1e-12 # -> 5e-8 [K]
-tmo.VLE.P_tol = 1e-12 # -> 1. [Pa]
+tmo.BubblePoint.T_tol = 1e-12 # -> 1e-9 [K]
+tmo.DewPoint.T_tol = 1e-12 # -> 1e-9 [K]
+tmo.BubblePoint.P_tol = 1e-6 # -> 1e-3 [Pa]
+tmo.DewPoint.P_tol = 1e-6 # -> 1e-3 [Pa]
+tmo.VLE.T_tol = 1e-9 # -> 5e-8 [K]
+tmo.VLE.P_tol = 1e-3 # -> 1. [Pa]
 tmo.VLE.maxiter = 50 # -> 20 [-]
-tmo.VLE.T_tol = 1e-12 # -> 5e-8 [K]
-tmo.VLE.P_tol = 1e-9 # -> 1. [Pa]
-tmo.VLE.H_hat_tol = 1e-12 # -> 1e-6 [J/g]
-tmo.VLE.S_hat_tol = 1e-12 # -> 1e-6 [J/g/K]
-tmo.VLE.V_tol = 1e-12 # -> 1e-6 [mol %]
-tmo.VLE.x_tol = 1e-12 # -> 1e-9 [mol %]
-tmo.VLE.y_tol = 1e-12 # -> 1e-9 [mol %]
+tmo.VLE.T_tol = 1e-9 # -> 5e-8 [K]
+tmo.VLE.P_tol = 1e-3 # -> 1. [Pa]
+tmo.VLE.H_hat_tol = 1e-9 # -> 1e-6 [J/g]
+tmo.VLE.S_hat_tol = 1e-9 # -> 1e-6 [J/g/K]
+tmo.VLE.V_tol = 1e-6 # -> 1e-6 [mol %]
+tmo.VLE.x_tol = 1e-9 # -> 1e-9 [mol %]
+tmo.VLE.y_tol = 1e-9 # -> 1e-9 [mol %]
 tmo.LLE.shgo_options = dict(f_tol=1e-9, minimizer_kwargs=dict(f_tol=1e-9))
 tmo.LLE.differential_evolution_options = {'seed': 0, 'popsize': 12, 'tol': 1e-9}
 tmo.LLE.pseudo_equilibrium_outer_loop_options = dict(
-    xtol=1e-16, rtol=1e-16, maxiter=200, checkiter=False, 
-    checkconvergence=False, convergenceiter=20,
+    xtol=1e-9, rtol=1e-9, maxiter=100, checkiter=False, 
+    checkconvergence=False, convergenceiter=10,
 )
 tmo.LLE.pseudo_equilibrium_inner_loop_options = dict(
-    xtol=1e-12, rtol=1e-16, maxiter=200, checkiter=False,
+    xtol=1e-12, rtol=1e-12, maxiter=100, checkiter=False,
     checkconvergence=False, convergenceiter=20,
 )
 tmo.LLE.default_composition_cache_tolerance = 1e-16
 tmo.LLE.default_temperature_cache_tolerance = 1e-16
 bst.ShortcutColumn.iter_solver_kwargs = dict(
-    xtol=1e-16,
+    xtol=1e-12,
     checkiter=False,
     checkconvergence=False, 
-    convergenceiter=20,
+    convergenceiter=10,
 )
 
 # %% System creation
@@ -115,10 +116,12 @@ try:
     images_folder = os.path.join(os.path.dirname(__file__), 'images')
     simulations_folder = os.path.join(os.path.dirname(__file__), 'simulations')
     graphs_folder = os.path.join(os.path.dirname(__file__), 'graphs')
+    new_graphs_folder = os.path.join(os.path.dirname(__file__), 'new_graphs')
 except:
     images_folder = os.path.join(os.getcwd(), 'images')
     simulations_folder = os.path.join(os.getcwd(), 'simulations')
     graphs_folder = os.path.join(os.getcwd(), 'graphs')
+    new_graphs_folder = os.path.join(os.getcwd(), 'new_graphs')
     
 stages_file = os.path.join(simulations_folder, 'system_stages.json')
 benchmark_systems_2025 = (
@@ -143,7 +146,7 @@ try:
 except:
     system_stages = {}
 
-def register(name, title, time, tickmarks, label, 
+def register(name, title, tickmarks, label, 
              yticks=None, 
              ideal_tickmarks=None, 
              closeup_ideal_tickmarks=None,
@@ -176,7 +179,6 @@ def register(name, title, time, tickmarks, label,
     for i, f in name_fs:
         all_systems[i] = f
         system_titles[i] = title
-        system_convergence_times[i] = time
         system_labels[i] = label
         system_yticks[i] = yticks
         if unit: units.add(i)
@@ -184,10 +186,14 @@ def register(name, title, time, tickmarks, label,
     if closeup_ideal_tickmarks is None: closeup_ideal_tickmarks = ideal_tickmarks
     if closeup_nonideal_tickmarks is None: closeup_nonideal_tickmarks = tickmarks
     for i in ('', '_relaxed'):
-        system_tickmarks[False, name + i] = tickmarks
-        system_tickmarks[True, name + i] = closeup_nonideal_tickmarks
-    system_tickmarks[False, name + '_ideal'] = ideal_tickmarks
-    system_tickmarks[True, name + '_ideal'] = closeup_ideal_tickmarks
+        name_i = name + i
+        system_convergence_times[name_i] = 1.2 * tickmarks[-1]
+        system_tickmarks[False, name_i] = tickmarks
+        system_tickmarks[True, name_i] = closeup_nonideal_tickmarks
+    name_ideal = name + '_ideal'
+    system_convergence_times[name_ideal] = 1.2 * ideal_tickmarks[-1]
+    system_tickmarks[False, name_ideal] = ideal_tickmarks
+    system_tickmarks[True, name_ideal] = closeup_ideal_tickmarks
 
 def get_LLE_partition_coefficients(sys):
     partition_coefficients = {}
@@ -209,29 +215,37 @@ def get_LLE_partition_coefficients(sys):
 
 register(
     'acetic_acid_complex', 'Rigorous system',
-    90, [0, 8, 16, 24, 32], 'AcOH\nindustrial\ndewatering', 
+    [0, 40, 80, 120, 160], 'AcOH\nindustrial\ndewatering', 
     [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
-    ideal_tickmarks=[0, 6, 12, 18, 24],
-    closeup_ideal_tickmarks=[0, 0.5, 1, 1.5, 2, 2.5],
-    closeup_nonideal_tickmarks=[0, 5, 10, 15, 20],
+    ideal_tickmarks=[0, 2, 4, 6, 8],
+    closeup_ideal_tickmarks=[0, 0.1, 0.2, 0.3, 0.4, 0.5],
+    closeup_nonideal_tickmarks=[0, 5, 10],
     relaxation_factor=0.5,
     # [(-5, -2.5, 0, 2.5, 5), (-8, -5, -2, 1, 4)],
 )
 register(
+    'acetic_acid_complex_mock', 'Rigorous system',
+    [0, 8, 16, 24, 32], 'AcOH\nindustrial\ndewatering', 
+    [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
+    ideal_tickmarks=[0, 2, 4, 6, 8],
+    closeup_ideal_tickmarks=[0, 0.1, 0.2, 0.3, 0.4, 0.5],
+    closeup_nonideal_tickmarks=[0, 5, 10],
+    # [(-5, -2.5, 0, 2.5, 5), (-8, -5, -2, 1, 4)],
+)
+register(
     'acetic_acid_simple', 'Subsystem',
-    12, 
-    [0, 1.5, 3, 4.5, 6],  
+    [0, 2, 4, 6, 8],  
     'AcOH\npartial\ndewatering',
     [(-15, -10, -5, 0, 5, 10), (-15, -10, -5, 0, 5, 10)],
     ideal_tickmarks=[0, 0.4, 0.8, 1.2, 1.6],
-    closeup_ideal_tickmarks=[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+    closeup_ideal_tickmarks=[0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
     closeup_nonideal_tickmarks=[0, 0.3, 0.6, 0.9, 1.2, 1.5],
     relaxation_factor=0.5,
     # [(-15, -10, -5, 0, 5, 10), (-15, -10, -5, 0, 5, 10)],
 )
 register(
     'acetic_acid_complex_decoupled', 'Shortcut system',
-    6, [0, 0.2, 0.4, 0.6, 0.8, 1],'AcOH\nshortcut\ndewatering',
+    [0, 0.2, 0.4, 0.6, 0.8, 1],'AcOH\nshortcut\ndewatering',
     [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
     ideal_tickmarks=[0.1, 0.2, 0.3, 0.4],
 )
@@ -246,12 +260,12 @@ register(
 
 register(
     'butanol_purification', 'Butanol purification',
-    6, [0, 0.1, 0.2, 0.3, 0.4], 'BtOH\nseparation',
+    [0, 0.1, 0.2, 0.3, 0.4], 'BtOH\nseparation',
     [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
 )
 register(
     'ethanol_purification', 'Ethanol purification',
-    5, [0, 0.03, 0.06, 0.09, 0.12], 'EtOH\nseparation',
+    [0, 0.03, 0.06, 0.09, 0.12], 'EtOH\nseparation',
     [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
 )
 # register(
@@ -264,21 +278,35 @@ register(
 # )
 register(
     'haber_bosch_process', 'Haber-Bosch',
-    1, [0, 0.006, 0.012, 0.018, 0.024], 'Haber-Bosch\nammonia\nproduction',
+    [0, 0.006, 0.012, 0.018, 0.024], 'Haber-Bosch\nammonia\nproduction',
     [[-10, -7.5, -5, -2.5, 0], [-10, -7.5, -5, -2.5, 0]],
     closeup_nonideal_tickmarks=[0, 0.005, 0.01, 0.015, 0.02],
 )
 
 register(
     'stripper', 'Stripper',
-    1, [0, 0.1, 0.2, 0.3, 0.4, 0.5], 'Stripper',
+    [0, 0.1, 0.2, 0.3, 0.4, 0.5], 'Stripper',
     [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
     unit=True
 )
 
 register(
     'flash', 'Flash',
-    0.05, [0, 0.01, 0.02, 0.03, 0.04, 0.05], 'Flash',
+    [0, 0.01, 0.02, 0.03, 0.04, 0.05], 'Flash',
+    [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
+    unit=True
+)
+
+register(
+    'shortcut_column', 'Shortcut column',
+    [0, 0.01, 0.02, 0.03, 0.04, 0.05], 'SC',
+    [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
+    unit=True
+)
+
+register(
+    'heat_exchanger', 'Heat-Exchanger',
+    [0, 0.01, 0.02, 0.03, 0.04, 0.05], 'HX',
     [(-15, -10, -5, 0, 5), (-15, -10, -5, 0, 5)],
     unit=True
 )
@@ -293,7 +321,7 @@ def test_convergence(systems=None, algs=None, maxiter=None):
     outs = []
     if algs is None: algs = ('po', 'sm')
     names = {
-        'po': 'Phenomena based',
+        'po': 'phenomena based',
         'pm': 'phenomena modular',
         'sm': 'sequential modular',
     }
@@ -375,19 +403,19 @@ def convergence_time(sm, po):
 
 def get_phenomegraph(
         system=None, algorithm=None, load=True, save=True,
-        simulate=True, bipartite=True, new_graph=False, mock=True,
+        simulate=False, bipartite=True, new_graph=False, mock=True,
         convergence_rate=25,
     ):
     bst.MultiStageEquilibrium.max_attempts = 0 # For consistent tracking
     if system is None: system = 'acetic_acid_simple'
-    if algorithm is None: algorithm = 'Phenomena based'
+    if algorithm is None: algorithm = 'phenomena based'
     alg = algorithm.replace(' ', '_').replace('-', '_')
-    file = os.path.join(graphs_folder, f"{system}_{alg}")
+    file = os.path.join(new_graphs_folder, f"{system}_{alg}")
     if not bipartite: file += '_monopartite'
     if new_graph:
         dotfile = None
     else:
-        dotfile = tmo.DotFile(os.path.join(graphs_folder, system))
+        dotfile = tmo.DotFile(os.path.join(new_graphs_folder, system))
     if load:
         try:
             with open(file, 'rb') as f: phenomena_graph = pickle.load(f)
@@ -425,13 +453,9 @@ def get_phenomegraph(
             with open(file, 'wb') as f: pickle.dump(phenomena_graph, f)
     return phenomena_graph
 
-def create_graphs(system=None, bipartite=True, algorithms=None):
+def create_graphs(system=None, bipartite=True, algorithms=None, subgraphs=False, pydot=True):
     if system is None: system = 'acetic_acid_simple'
-    if algorithms is None: 
-        if system in units:
-            algorithms = ('Phenomena based',)
-        else:
-            algorithms = ('sequential modular', 'Phenomena based')
+    if algorithms is None: algorithms = ('phenomena based',)
     elif isinstance(algorithms, str): algorithms = [algorithms]
     header = system
     if not bipartite: header += '_monopartite'
@@ -439,13 +463,22 @@ def create_graphs(system=None, bipartite=True, algorithms=None):
     for algorithm in algorithms:
         graph = get_phenomegraph(system, algorithm=algorithm, simulate=False, new_graph=False)
         if first:
-            file = os.path.join(graphs_folder, f"{header}_graph.png")
-            graph.write(file)
-        for subgraph in graph.subgraphs:
-            _, name = subgraph.name.split('.')
-            file = os.path.join(graphs_folder, f"{header}_subgraph_{name}.png")
-            subgraph.write(file)
-        
+            if pydot:
+                file = os.path.join(new_graphs_folder, f"{header}_graph.png")
+                graph.write(file)
+            else:
+                file = os.path.join(new_graphs_folder, f"{header}_OPTgraph.png")
+                graph.write(file, pydot=False)
+        if subgraphs:
+            for subgraph in graph.subgraphs:
+                _, name = subgraph.name.split('.')
+                if pydot:
+                    file = os.path.join(new_graphs_folder, f"{header}_subgraph_{name}.png")
+                    subgraph.write(file)
+                else:
+                    file = os.path.join(new_graphs_folder, f"{header}_OPTsubgraph_{name}.png")
+                    subgraph.write(file, pydot=False)
+
 def create_convergence_plot(
         system=None, algorithm=None, load=True, save=True,
     ):
@@ -454,9 +487,9 @@ def create_convergence_plot(
     alg = algorithm.replace(' ', '_').replace('-', '_')
     phenomena_graph = get_phenomegraph(
         system=system, algorithm=algorithm, 
-        load=load, save=save, 
+        load=load, save=save, simulate=True,
     )
-    file = os.path.join(graphs_folder, f"{system}_{alg}")
+    file = os.path.join(new_graphs_folder, f"{system}_{alg}")
     return phenomena_graph.plot_convergence_profile(file=file)
 
 def create_graph_theoretic_convergence_gif(
@@ -475,7 +508,7 @@ def create_graph_theoretic_convergence_gif(
         load=load, save=save, bipartite=False, mock=mock, convergence_rate=convergence_rate,
     )
     reference = {eq.name: n for n, nodes in enumerate(aggregated_graph.phenomenodes) for eq in nodes.equations}
-    file = os.path.join(graphs_folder, f"{system}_{alg}_graph")
+    file = os.path.join(new_graphs_folder, f"{system}_{alg}_graph")
     
     bipartite_graph.convergence_gif(
         time=aggregated_graph.time,
@@ -608,25 +641,25 @@ def create_tracked_system(name, algorithm, time=None):
     )
     return sys
     
-def get_steady_state(name, load=True):
-    file_name = f"{name}_sequential modular_0"
-    file = os.path.join(simulations_folder, file_name)
-    bst.F.clear()
-    if load:
-        try:
-            with open(file, 'rb') as f: 
-                time, variable_profiles = pickle.load(f)
-        except: 
-            return get_steady_state(name, False)
-    else:
-        sys = create_tracked_system(name, 'sequential modular', system_convergence_times[name] * 1.5) 
-        sys.simulate(design_and_cost=False)
-        sys.assert_tracking_ok()
-        sys.flowsheet.clear()
-        results = time, variable_profiles = sys.get_variable_profiles()
-        with open(file, 'wb') as f: pickle.dump(results, f)
-    steady_state = variable_profiles.iloc[-1]
-    return steady_state
+# def get_steady_state(name, load=True):
+#     file_name = f"{name}_sequential modular_0"
+#     file = os.path.join(simulations_folder, file_name)
+#     bst.F.clear()
+#     if load:
+#         try:
+#             with open(file, 'rb') as f: 
+#                 time, variable_profiles = pickle.load(f)
+#         except: 
+#             return get_steady_state(name, False)
+#     else:
+#         sys = create_tracked_system(name, 'sequential modular', system_convergence_times[name] * 1.5) 
+#         sys.simulate(design_and_cost=False)
+#         sys.assert_tracking_ok()
+#         sys.flowsheet.clear()
+#         results = time, variable_profiles = sys.get_variable_profiles()
+#         with open(file, 'wb') as f: pickle.dump(results, f)
+#     steady_state = variable_profiles.iloc[-1]
+#     return steady_state
 
 def split_camel(name):
     if name.isupper():
@@ -732,17 +765,17 @@ def parse_index(index, dct):
         variable = variable.capitalize()
     return unit, stage, variable, chemical, units
 
-def steady_state_variables_table(name):
-    ss = get_steady_state(name)
-    sys = create_tracked_system(name, 'sequential modular') 
-    dct = sys.flowsheet.to_dict()
-    ss.index = pd.MultiIndex.from_tuples(
-        [parse_index(i, dct) for i in ss.index],
-        names=['Unit operation', 'Stage #', 'Variable', 'Chemical', 'Units'],
-    )
-    ss.name = 'Values'
-    ss = ss.sort_index()
-    return ss.to_frame()
+# def steady_state_variables_table(name):
+#     ss = get_steady_state(name)
+#     sys = create_tracked_system(name, 'sequential modular') 
+#     dct = sys.flowsheet.to_dict()
+#     ss.index = pd.MultiIndex.from_tuples(
+#         [parse_index(i, dct) for i in ss.index],
+#         names=['Unit operation', 'Stage #', 'Variable', 'Chemical', 'Units'],
+#     )
+#     ss.name = 'Values'
+#     ss = ss.sort_index()
+#     return ss.to_frame()
 
 def variable_convergence_table(name, alg='sequential modular'):
     time, profiles = get_variable_profiles(name, alg, error=False)
@@ -916,10 +949,10 @@ def system_report(name):
         [specifications_table(name)], 
         writer, 'Specifications',
     )
-    bst.report.tables_to_excel(
-        [steady_state_variables_table(name)], 
-        writer, 'Steady state results',
-    )
+    # bst.report.tables_to_excel(
+    #     [steady_state_variables_table(name)], 
+    #     writer, 'Steady state results',
+    # )
     algorithms = (
         'phenomena based', 
         'phenomena modular', 
@@ -1019,14 +1052,18 @@ def get_variable_profiles(
     if mock:
         errors = variable_profiles.copy()
     else:
-        steady_state = get_steady_state(name, True)
-        steady_state.values[steady_state < 1e-6] = 0
-        steady_state.values[steady_state > 1e6] = 1e6
+        # steady_state = get_steady_state(name, True)
+        # steady_state.values[steady_state < 1e-6] = 0
+        # steady_state.values[steady_state > 1e6] = 1e6
+        # variable_profiles.values[variable_profiles < 1e-6] = 0
+        # variable_profiles.values[variable_profiles > 1e6] = 1e6
+        # steady_state = steady_state.reindex(variable_profiles.columns)
+        
         variable_profiles.values[variable_profiles < 1e-6] = 0
         variable_profiles.values[variable_profiles > 1e6] = 1e6
-        steady_state = steady_state.reindex(variable_profiles.columns)
+        steady_state = variable_profiles.iloc[-1]
         errors = pd.DataFrame(
-            variable_profiles.values - steady_state.values, 
+            np.abs(variable_profiles.values - steady_state.values), 
             columns=variable_profiles.columns, 
             index=variable_profiles.index
         )
@@ -1068,7 +1105,7 @@ def dct_mean_profile(dcts: list[dict], categories):
     for i in names:
         values = mean[i]
         mask = np.isnan(values)
-        values[mask] = values[~mask].max() # Maximum error
+        if mask.any(): values[mask] = values[~mask].max() # Maximum error
         values[values < 1e-15] = 1e-15
         values[:] = np.log10(values)
     return mean
@@ -1081,9 +1118,8 @@ def dct_mean_std(dcts: list[dict], keys: list[str]):
     return {i: (values[i].mean(), values[i].std()) for i in keys}
 
 def plot_profile(
-        systems=None, algorithms=None, N=1, load=True, save=True, dark=False,
+        systems=None, algorithms=None, N=1, load=True, save=True, dark=True,
         closeup=False, fs=None, width=None, aspect_ratio=None, label=True,
-        load_steady_state=True,
     ):
     if dark: 
         plt.style.use('dark_background')
@@ -1092,7 +1128,7 @@ def plot_profile(
             "axes.facecolor":    (0.0, 0.0, 0.0, 1),  # green with alpha = 50%
             "savefig.facecolor": (0.0, 0.0, 0.0, 0),  # blue  with alpha = 20%
         })
-    if algorithms is None: algorithms = ('phenomena based', 'phenomena modular', 'sequential modular')
+    if algorithms is None: algorithms = ('phenomena based', 'sequential modular')
     if isinstance(systems, str): systems = [systems]
     if systems is None: systems = list(all_systems)
     if fs is None: fs = 10
@@ -1107,7 +1143,6 @@ def plot_profile(
     for m, sys in enumerate(systems):
         time = system_convergence_times[sys]
         axes = all_axes[:, m]
-        if not load_steady_state: get_steady_state(sys, False)
         profiles = {
             alg: [get_variable_profiles(sys, alg, i, load=load) for i in range(N)]
             for alg in algorithms
@@ -1116,20 +1151,15 @@ def plot_profile(
         for dct in mean_profiles.values():
             time = dct['time']
             time[:] -= time[0]
-        # yticks_list = system_yticks[sys]
         for n, (alg, mean_profile) in enumerate(mean_profiles.items()):
             ax = axes[n]
             plt.sca(ax)
             xticks = system_tickmarks[closeup, sys]
             for category in categories:
-                # if alg == 'sequential modular' and category == 'lle': breakpoint()
                 if category not in mean_profile: continue
                 y = np.array(mean_profile[category])
-                # y = gaussian_filter(y, 0.2)
                 t = np.array(mean_profile['time'])
                 c = phenomena_colors[category.split('_')[0]]
-                # print(alg, category)
-                # print(y)
                 if alg == 'Phenomena based' and sys == 'acetic_acid_complex':
                     time_, variable_profiles = get_variable_profiles(
                         'acetic_acid_complex', 'Phenomena based',
@@ -1142,17 +1172,14 @@ def plot_profile(
                 plt.step(t, y, '-', color=c, lw=1, alpha=1, where='post')
             
             yticklabels = m == 0
-            # yticks = yticks_list[n]
             yticks = [-12, -6, 0, 6, 12]
             if yticklabels: yticklabels = [str(i) for i in yticks]
-            # if yticklabels: yticklabels = [r'$\mathrm{10}^{' f'{i}' '}$' for i in yticks]
             xticklabels = xtick0 = n == n_rows-1
             xtickf = True
             ytick0 = n == n_rows-1
             ytickf = n == 0
             plt.xlim(0, xticks[-1])
             plt.ylim(yticks[0], yticks[-1])
-            # if m == 0: plt.ylabel(f'{alg}\nlog$_{{10}}$ error')
             bst.utils.style_axis(
                 ax, xticks=xticks, yticks=yticks, 
                 xtick0=xtick0, xtickf=xtickf, ytick0=ytick0, ytickf=ytickf,
@@ -1191,7 +1218,10 @@ def plot_profile(
         plt.savefig(file, dpi=900, transparent=True)
     for i in ('svg', 'png'):
         system_names = '_'.join(systems)
-        name = f'{system_names}_profile.{i}'
+        if closeup:
+            name = f'{system_names}_profile_closeup.{i}'
+        else:
+            name = f'{system_names}_profile.{i}'
         file = os.path.join(images_folder, name)
         plt.savefig(file, dpi=900, transparent=True)
     # return fig, all_axes, sms, pos
